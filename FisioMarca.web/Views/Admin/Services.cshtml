@@ -1,0 +1,126 @@
+﻿@model List<FisioMarca.Models.Service>
+
+    @{
+    ViewData["Title"] = "Especialidades";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    }
+
+    <div class="admin-page">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+            <div>
+                <h1 class="h3 mb-1">Gestionar especialidades</h1>
+                <p class="text-muted mb-0">Administra servicios, precios e imágenes.</p>
+            </div>
+
+            <div class="d-flex gap-2">
+                <a asp-action="ServiceCreate" class="btn btn-primary btn-lg">+ Nueva especialidad</a>
+                <a asp-controller="Admin" asp-action="Index" class="btn btn-ad-back">
+                    <span class="ad-back-ic">←</span>
+                    Volver
+                </a>
+            </div>
+        </div>
+
+        @if (TempData["AdminMsg"] != null)
+    {
+        <div class="alert alert-info shadow-sm border-0 mb-3">
+            @TempData["AdminMsg"]
+        </div>
+    }
+
+        <div class="card shadow-sm border-0 services-card">
+            <div class="card-body p-0">
+                @if (Model == null || !Model.Any())
+            {
+                <div class="p-4 text-center text-muted">
+                    No hay especialidades registradas.
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 services-table">
+                        <thead>
+                            <tr>
+                                <th>Imagen</th>
+                                <th>Nombre</th>
+                                <th>Descripción</th>
+                                <th>Precio</th>
+                                <th>Estado</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                            <tr class="@(item.IsActive ? "" : "row-inactive")">
+                                <td style="width:90px;">
+                                    <img src="@item.ImageUrl"
+                                         alt="@item.Name"
+                                         class="service-thumb" />
+                                </td>
+
+                                <td class="fw-semibold">@item.Name</td>
+
+                                <td class="text-muted fw-semibold">
+                                    @(string.IsNullOrWhiteSpace(item.Description) ? "-" : item.Description)
+                                </td>
+
+                                <td class="fw-bold text-dark">
+                                    S/ @item.Price.ToString("N2")
+                                </td>
+
+                                <td>
+                                    @if (item.IsActive)
+                                        {
+                                    <span class="status-badge status-active">
+                                        <i class="bi bi-check-circle-fill"></i>
+                                        Activo
+                                    </span>
+                                        }
+                                        else
+                                        {
+                                    <span class="status-badge status-inactive">
+                                        <i class="bi bi-pause-circle-fill"></i>
+                                        Inactivo
+                                    </span>
+                                        }
+                                </td>
+
+                                <td class="text-center">
+                                    <div class="d-flex justify-content-center gap-2 flex-wrap">
+
+                                        <a asp-action="ServiceEdit"
+                                           asp-route-id="@item.Id"
+                                           class="btn-action btn-edit"
+                                           title="Editar especialidad">
+                                            <i class="bi bi-pencil-square"></i>
+                                            <span>Editar</span>
+                                        </a>
+
+                                        <form asp-action="ServiceToggleStatus"
+                                              asp-route-id="@item.Id"
+                                              method="post"
+                                              class="d-inline">
+                                            @Html.AntiForgeryToken()
+
+                                            <button type="submit"
+                                                    class="btn-action @(item.IsActive ? "btn-toggle-off" : "btn-toggle-on")"
+                                                    title="Cambiar estado"
+                                                    onclick="return confirm('¿Deseas @(item.IsActive ? "desactivar" : "activar") la especialidad @item.Name?');">
+                                                <i class="bi @(item.IsActive ? "bi-slash-circle" : "bi-check-circle")"></i>
+                                                <span>@(item.IsActive ? "Desactivar" : "Activar")</span>
+                                            </button>
+                                        </form>
+
+                                    </div>
+                                </td>
+                            </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            </div>
+        </div>
+    </div>

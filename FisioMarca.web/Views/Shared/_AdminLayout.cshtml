@@ -1,0 +1,92 @@
+﻿@using Microsoft.AspNetCore.Http
+@{
+    var userName = Context.Session.GetString("USER_NAME") ?? "Administrador";
+    var userRole = (Context.Session.GetString("USER_ROLE") ?? "").Trim().ToLower();
+    var userEmail = (Context.Session.GetString("USER_EMAIL") ?? "").Trim().ToLower();
+
+    var isAdmin =
+        userRole == "admin" ||
+        userRole == "administrador" ||
+        userEmail == "mary@fisiomarca.com" ||
+        userEmail == "jonathan@fisiomarca.com";
+
+    if (!isAdmin)
+    {
+        Context.Response.Redirect(Url.Action("Index", "Home")!);
+        return;
+    }
+
+    var initial = string.IsNullOrWhiteSpace(userName) ? "A" : userName.Substring(0, 1).ToUpper();
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - FisioMarca Admin</title>
+
+   
+    <script>
+        (function () {
+            const KEY = "fm_admin_theme";
+            const saved = localStorage.getItem(KEY);
+            const theme = saved || "dark"; 
+            document.documentElement.setAttribute("data-theme", theme);
+        })();
+    </script>
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css" />
+    <link rel="stylesheet" href="~/css/admin-dashboard.css" asp-append-version="true" />
+</head>
+<body class="admin-body">
+    <div class="admin-shell">
+        <aside class="admin-sidebar">
+            <div>
+                <div class="admin-brand">FisioMarca</div>
+                <div class="admin-user mt-3">
+                    <div class="admin-user-avatar">@initial</div>
+                    <div>
+                        <div class="admin-user-name">@userName</div>
+                        <div class="admin-user-role">@userRole</div>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="admin-nav mt-2">
+                <a class="admin-nav-link" asp-controller="Admin" asp-action="Index">Dashboard</a>
+                <a class="admin-nav-link" asp-controller="Admin" asp-action="Services">Especialidades</a>
+                <a class="admin-nav-link" asp-controller="Admin" asp-action="Reservations">Reservas</a>
+            </nav>
+
+            <div class="admin-bottom">
+                
+                <button id="themeToggle" class="theme-toggle-btn" type="button" aria-label="Cambiar tema">
+                    <span class="ic moon" aria-hidden="true">🌙</span>
+                    <span class="sep" aria-hidden="true">/</span>
+                    <span class="ic sun" aria-hidden="true">☀️</span>
+                </button>
+
+                <form asp-controller="Account" asp-action="Logout" method="post" class="mt-2">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="admin-logout-btn">
+                        <img src="~/images/icons/cerrar.png" alt="Salir" />
+                        Cerrar sesión
+                    </button>
+                </form>
+            </div>
+        </aside>
+
+        <main class="admin-main">
+            @RenderBody()
+        </main>
+    </div>
+
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+    <script src="~/js/admin-dashboard.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

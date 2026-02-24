@@ -1,0 +1,503 @@
+﻿@model FisioMarca.Models.viewModels.UserPanelVM
+@{
+    ViewData["Title"] = "Mi Panel";
+    var tab = (Model.ActiveTab ?? "perfil").Trim().ToLower();
+    var reservasVisibles = (Model.Reservas ?? new List<FisioMarca.Models.viewModels.UserReservationItemVM>())
+        .Where(r => !string.Equals((r.Estado ?? "").Trim(), "Cancelada", StringComparison.OrdinalIgnoreCase))
+        .ToList();
+}
+
+<div class="client-panel">
+
+    <!-- HEADER UNIFICADO: Título + Tabs -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-3 p-md-4">
+            <div class="panel-header d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+                <div>
+                    <h1 class="m-0 panel-welcome-title">Bienvenido- @Model.UserName!</h1>
+                </div>
+
+                <div class="panel-tabs d-flex flex-wrap gap-2">
+                    <a asp-controller="Account" asp-action="Panel" asp-route-tab="perfil"
+                       class="btn @(tab == "perfil" ? "btn-primary" : "btn-outline-primary")">
+                        👤 Mi Perfil
+                    </a>
+
+                    <a asp-controller="Account" asp-action="Panel" asp-route-tab="reservas"
+                       class="btn @(tab == "reservas" ? "btn-primary" : "btn-outline-primary")">
+                        🗓️ Mis Reservas
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTENIDO -->
+    @if (tab == "perfil")
+    {
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-header bg-white border-0 pt-4 px-4">
+            <div class="d-flex align-items-center gap-3">
+                <div class="profile-avatar">@((Model.UserName ?? "U").Substring(0,1).ToUpper())</div>
+                <div>
+                    <h2 class="h4 mb-1">Mi Perfil</h2>
+                    <p class="text-muted mb-0">Gestiona tu información personal</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-body p-4">
+            <div class="row g-3">
+                <div class="col-12 col-md-6">
+                    <label class="form-label fw-semibold">Nombre completo</label>
+                    <input class="form-control" value="@Model.FullName" readonly />
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <label class="form-label fw-semibold">Correo electrónico</label>
+                    <input class="form-control" value="@Model.Email" readonly />
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <label class="form-label fw-semibold">Teléfono</label>
+                    <input class="form-control" value="@(string.IsNullOrWhiteSpace(Model.Phone) ? "No registrado" : Model.Phone)" readonly />
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <label class="form-label fw-semibold">Usuario</label>
+                    <input class="form-control" value="@Model.UserName" readonly />
+                </div>
+            </div>
+
+            <div class="mt-4 d-flex flex-wrap gap-2">
+                <a class="btn btn-outline-primary" asp-controller="Account" asp-action="ChangePassword">
+                    Cambiar contraseña
+                </a>
+                <a class="btn btn-primary" asp-controller="Account" asp-action="Panel" asp-route-tab="reservas">
+                    Ver mis reservas
+                </a>
+            </div>
+        </div>
+    </div>
+    }
+    else
+    {
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-0">
+            <div class="p-4 pb-0">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <div>
+                        <h2 class="client-title mb-1">Mis Reservas</h2>
+                        <p class="text-muted mb-3">Aquí puedes ver, modificar o cancelar tus citas programadas.</p>
+                    </div>
+                    <a class="btn btn-fm-primary" asp-controller="Appointments" asp-action="Create">+ Nueva reserva</a>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table agenda-table mb-0 align-middle">
+                    <thead>
+                        <tr>
+                            <th>Fecha y hora</th>
+                            <th>Especialidad</th>
+                            <th>Precio</th>
+                            <th>Estado</th>
+                            <th>Comentario</th>
+                            <th class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!reservasVisibles.Any())
+                            {
+                        <tr>
+                            <td colspan="6" class="p-4 text-center text-muted">
+                                Aún no tienes reservas registradas.
+                            </td>
+                        </tr>
+                            }
+                            else
+                            {
+                                foreach (var r in reservasVisibles)
+                                {
+                        <tr>
+                            <td>
+                                @(r.FechaHora == DateTime.MinValue
+                                                ? "-"
+                                                : r.FechaHora.ToString("dd-MM-yyyy HH:mm"))
+                            </td>
+                            <td>@r.Especialidad</td>
+                            <td>S/ @r.Precio.ToString("0.00")</td>
+                            <td>
+                                <span class="status-badge status-default">@r.Estado</span>
+                            </td>
+                            <td>@(string.IsNullOrWhiteSpace(r.Comentario) ? "-" : r.Comentario)</td>
+                            <td class="text-end">
+                                <a class="btn btn-sm btn-outline-primary"
+                                   asp-controller="Appointments" asp-action="Edit" asp-route-id="@r.Id">
+                                    Modificar
+                                </a>
+
+                                <form class="d-inline"
+                                      asp-controller="Appointments" asp-action="Cancel"
+                                      asp-route-id="@r.Id" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        Cancelar
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                                }
+                            }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    }
+
+</div>
+
+<style>
+    /* ==========================
+       PANEL CLIENTE - SUAVE / ELEGANTE
+    ========================== */
+
+    .client-panel {
+        --cp-bg: #f7f9fc;
+        --cp-card: #ffffff;
+        --cp-border: #e9eef5;
+        --cp-shadow: 0 6px 20px rgba(15, 23, 42, 0.04);
+        --cp-title: #183b6b;
+        --cp-text: #1f2937;
+        --cp-muted: #6b7280;
+        --cp-primary: #4f7df3;
+        --cp-primary-soft: #eef3ff;
+        --cp-primary-border: #cfdcff;
+        --cp-success-bg: #e8f8ee;
+        --cp-success-text: #1f7a44;
+        --cp-danger: #e05a5a;
+        --cp-danger-soft: #fff3f3;
+        --cp-danger-border: #f6c5c5;
+        font-family: "Inter", "Segoe UI", Roboto, Arial, sans-serif;
+        color: var(--cp-text);
+    }
+
+        /* Cards */
+        .client-panel .card {
+            background: var(--cp-card);
+            border: 1px solid var(--cp-border) !important;
+            border-radius: 18px !important;
+            box-shadow: var(--cp-shadow) !important;
+        }
+
+    /* Header unificado */
+    .panel-header {
+        min-height: 70px;
+    }
+
+    .panel-welcome-title {
+        color: var(--cp-title);
+        font-weight: 700;
+        font-size: clamp(1.65rem, 2vw, 2.2rem);
+        line-height: 1.15;
+        letter-spacing: -.2px;
+        margin: 0;
+    }
+
+    /* Tabs superiores */
+    .panel-tabs .btn {
+        border-radius: 14px;
+        padding: .65rem 1rem;
+        font-weight: 600;
+        font-size: .98rem;
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        white-space: nowrap;
+        transition: all .18s ease;
+    }
+
+    .panel-tabs .btn-primary {
+        background: var(--cp-primary-soft);
+        color: var(--cp-primary);
+        border: 1px solid var(--cp-primary-border);
+        box-shadow: none;
+    }
+
+        .panel-tabs .btn-primary:hover {
+            background: #e8efff;
+            color: #3f6fe8;
+            border-color: #bdd0ff;
+        }
+
+    .panel-tabs .btn-outline-primary {
+        background: #fff;
+        color: #4b5f7d;
+        border: 1px solid var(--cp-border);
+    }
+
+        .panel-tabs .btn-outline-primary:hover {
+            background: #fafcff;
+            color: var(--cp-primary);
+            border-color: #d7e2fb;
+        }
+
+    /* Avatar */
+    .profile-avatar {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        color: #fff;
+        font-weight: 700;
+        font-size: 1.05rem;
+        background: linear-gradient(135deg, #5b86f7, #6ab7ff);
+        box-shadow: 0 8px 18px rgba(91, 134, 247, .18);
+        flex-shrink: 0;
+    }
+
+    /* Header de card de perfil */
+    .client-panel .card-header {
+        background: #ffffff !important;
+        border-bottom: 1px solid #f0f3f8 !important;
+        border-top-left-radius: 18px !important;
+        border-top-right-radius: 18px !important;
+    }
+
+        .client-panel .card-header .h4,
+        .client-title {
+            color: #10243f;
+            font-weight: 700;
+            letter-spacing: -.2px;
+        }
+
+    .client-panel .text-muted {
+        color: var(--cp-muted) !important;
+        font-weight: 400;
+    }
+
+    /* Labels y campos */
+    .client-panel .form-label {
+        color: #334155;
+        font-weight: 600 !important;
+        font-size: .95rem;
+        margin-bottom: .4rem;
+    }
+
+    .client-panel .form-control[readonly] {
+        background: #f8fafc;
+        border: 1px solid #e6edf5;
+        border-radius: 12px;
+        color: #1f2937;
+        min-height: 42px;
+        box-shadow: none;
+        font-weight: 400;
+    }
+
+        .client-panel .form-control[readonly]:focus {
+            border-color: #d6e4ff;
+            box-shadow: 0 0 0 .15rem rgba(79, 125, 243, .08);
+        }
+
+    /* Botones generales dentro del panel (perfil / tabla) */
+    .client-panel .btn {
+        border-radius: 12px;
+        font-weight: 600;
+        box-shadow: none;
+        transition: all .18s ease;
+    }
+
+    .client-panel .btn-primary {
+        background: var(--cp-primary);
+        border-color: var(--cp-primary);
+        color: #fff;
+    }
+
+        .client-panel .btn-primary:hover {
+            background: #3f6fe8;
+            border-color: #3f6fe8;
+            transform: translateY(-1px);
+        }
+
+    .client-panel .btn-outline-primary {
+        color: var(--cp-primary);
+        border-color: #c8d8ff;
+        background: #fff;
+    }
+
+        .client-panel .btn-outline-primary:hover {
+            background: #f5f8ff;
+            border-color: #b8ccff;
+            color: #3f6fe8;
+        }
+
+    /* Si usas btn-fm-primary en reservas */
+    .client-panel .btn-fm-primary {
+        background: var(--cp-primary);
+        border: 1px solid var(--cp-primary);
+        color: #fff;
+        border-radius: 12px;
+        padding: .6rem 1rem;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: .35rem;
+    }
+
+        .client-panel .btn-fm-primary:hover {
+            background: #3f6fe8;
+            border-color: #3f6fe8;
+            color: #fff;
+        }
+
+    /* Tabla de reservas */
+    .agenda-table {
+        margin: 0;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+        .agenda-table thead th {
+            background: #f8faff;
+            color: #49607d;
+            font-weight: 600;
+            font-size: .95rem;
+            border-bottom: 1px solid #eef2f7;
+            padding: .9rem 1rem;
+            white-space: nowrap;
+        }
+
+        .agenda-table tbody td {
+            color: #243041;
+            font-weight: 400;
+            border-top: 1px solid #f1f4f8;
+            padding: .95rem 1rem;
+            vertical-align: middle;
+            line-height: 1.35;
+        }
+
+        .agenda-table tbody tr:hover {
+            background: #fcfdff;
+        }
+
+        .agenda-table tbody tr:first-child td {
+            border-top: none;
+        }
+
+        /* Precio y fecha más legibles */
+        .agenda-table td:nth-child(1),
+        .agenda-table td:nth-child(3) {
+            white-space: nowrap;
+        }
+
+    /* Badge estado */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 96px;
+        padding: .35rem .75rem;
+        border-radius: 999px;
+        font-size: .85rem;
+        font-weight: 600;
+        line-height: 1.2;
+    }
+
+    .status-default {
+        background: var(--cp-success-bg);
+        color: var(--cp-success-text);
+    }
+
+    /* Botones acciones tabla */
+    .agenda-table .btn-sm {
+        border-radius: 10px;
+        font-weight: 600;
+        padding: .35rem .75rem;
+        font-size: .88rem;
+    }
+
+    .agenda-table .btn-outline-primary {
+        border-color: #c7d7ff;
+        color: #4f7df3;
+        background: #fff;
+    }
+
+        .agenda-table .btn-outline-primary:hover {
+            background: #f4f8ff;
+            border-color: #b7cbff;
+            color: #3f6fe8;
+        }
+
+    .agenda-table .btn-outline-danger {
+        border-color: var(--cp-danger-border);
+        color: var(--cp-danger);
+        background: #fff;
+    }
+
+        .agenda-table .btn-outline-danger:hover {
+            background: var(--cp-danger-soft);
+            border-color: #f0adad;
+            color: #cf4444;
+        }
+
+    /* Responsive */
+    @@media (max-width: 992px) {
+        .panel-header {
+            align-items: stretch !important;
+        }
+
+        .panel-tabs {
+            justify-content: flex-start;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .panel-welcome-title {
+            font-size: 1.55rem;
+        }
+
+        .panel-tabs {
+            width: 100%;
+            display: grid !important;
+            grid-template-columns: 1fr 1fr;
+            gap: .5rem;
+        }
+
+            .panel-tabs .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+        .client-panel .card-body.p-4 {
+            padding: 1rem !important;
+        }
+
+        .client-panel .card-header.pt-4.px-4 {
+            padding: 1rem !important;
+        }
+
+        .agenda-table {
+            min-width: 760px;
+        }
+
+            .agenda-table thead th,
+            .agenda-table tbody td {
+                padding: .75rem .8rem;
+                font-size: .92rem;
+            }
+    }
+
+    @@media (max-width: 480px) {
+        .panel-tabs {
+            grid-template-columns: 1fr;
+        }
+
+        .profile-avatar {
+            width: 52px;
+            height: 52px;
+        }
+    }
+</style>

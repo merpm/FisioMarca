@@ -1,0 +1,92 @@
+﻿@model IEnumerable<FisioMarca.Models.Appointment>
+@{
+    ViewData["Title"] = "Mis Reservas";
+}
+
+<div class="agenda-page">
+    <div class="agenda-header">
+        <div>
+            <h2 class="agenda-title">Mis Reservas</h2>
+            <p class="agenda-subtitle">Aquí puedes ver, modificar o cancelar tus citas programadas.</p>
+        </div>
+        <a asp-action="Create" class="btn btn-primary agenda-new-btn">+ Nueva reserva</a>
+    </div>
+
+    @if (TempData["ok"] != null)
+    {
+        <div class="alert alert-success">@TempData["ok"]</div>
+    }
+    @if (TempData["error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["error"]</div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="empty-card">
+            <h5>Aún no tienes reservas</h5>
+            <p>Haz clic en “Nueva reserva” para agendar tu primera cita.</p>
+            <a asp-action="Create" class="btn btn-primary">Reservar ahora</a>
+        </div>
+    }
+    else
+    {
+        <div class="agenda-card table-responsive">
+            <table class="table agenda-table align-middle">
+                <thead>
+                    <tr>
+                        <th>Fecha y hora</th>
+                        <th>Especialidad</th>
+                        <th>Precio</th>
+                        <th>Estado</th>
+                        <th>Comentario</th>
+                        <th style="width:220px;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var a in Model)
+                    {
+                        var estado = (a.Status ?? "").Trim().ToLower();
+                        string badgeClass = estado switch
+                        {
+                            "programada" => "status-badge status-programada",
+                            "cancelada" => "status-badge status-cancelada",
+                            "atendida" => "status-badge status-atendida",
+                            _ => "status-badge status-default"
+                        };
+
+                        <tr>
+                            <td>@a.DateTimeStart.ToString("dd-MM-yyyy HH:mm")</td>
+                            <td>@a.Service?.Name</td>
+                            <td>S/ @a.ServicePrice.ToString("N2")</td>
+                            <td><span class="@badgeClass">@a.Status</span></td>
+                            <td>@(string.IsNullOrWhiteSpace(a.Notes) ? "-" : a.Notes)</td>
+                            <td>
+                                @if ((a.Status ?? "").Equals("Programada", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <div class="d-flex gap-2">
+                                        <a asp-action="Edit" asp-route-id="@a.Id" class="btn btn-sm btn-outline-primary">
+                                            Modificar
+                                        </a>
+
+                                        <form asp-action="Cancel" asp-route-id="@a.Id" method="post" class="d-inline"
+                                              onsubmit="return confirm('¿Seguro que deseas cancelar esta reserva?');">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                Cancelar
+                                            </button>
+                                        </form>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Sin acciones</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

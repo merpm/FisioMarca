@@ -1,0 +1,49 @@
+﻿@model FisioMarca.Models.LoginViewModel
+@{
+    ViewData["Title"] = "Iniciar sesión";
+    var returnUrl = ViewBag.ReturnUrl as string;
+}
+
+<div class="fm-auth-page">
+    <div class="row justify-content-center w-100">
+        <div class="col-12 col-md-8 col-lg-6 col-xl-5">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-4 p-md-5">
+                    <h2 class="mb-4">Iniciar sesión</h2>
+
+                    <form asp-action="Login" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="returnUrl" value="@returnUrl" />
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="Email" class="form-label">Correo electrónico</label>
+                            <input asp-for="Email" class="form-control" placeholder="Ingresa tu correo" />
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Password" class="form-label">Contraseña</label>
+                            <input asp-for="Password" type="password" class="form-control" placeholder="Ingresa tu contraseña" />
+                            <span asp-validation-for="Password" class="text-danger"></span>
+                        </div>
+
+                        <div class="auth-actions mt-3">
+                            <button type="submit" class="btn btn-fm-primary">Ingresar</button>
+                            <a asp-controller="Account"
+                               asp-action="Register"
+                               class="btn btn-fm-outline no-underline">
+                                Crear cuenta
+                            </a>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,186 @@
+﻿@model FisioMarca.Models.ViewModels.AdminDashboardVM
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Dashboard";
+    var fromValue = Model.From.ToString("yyyy-MM-dd");
+    var toValue = Model.To.ToString("yyyy-MM-dd");
+}
+
+<div class="admin-header">
+  <div>
+    <h1 class="admin-title">Dashboard Administrativo</h1>
+    <p class="admin-subtitle">Resumen de reservas, calendario y control rápido</p>
+  </div>
+
+  <div>
+    <div class="admin-actions">
+      <a asp-action="Services" class="btn btn-outline-primary btn-lg">Gestionar especialidades</a>
+
+      <a class="btn btn-primary"
+         asp-controller="Admin"
+         asp-action="ExportReservationsPdf"
+         asp-route-range="@Model.Range"
+         asp-route-from="@Model.From.ToString("yyyy-MM-dd")"
+         asp-route-to="@Model.To.ToString("yyyy-MM-dd")">
+        Exportar PDF
+      </a>
+    </div>
+
+    <div class="admin-actions mt-2">
+      <button id="btnRefreshDashboard" type="button" class="btn btn-outline-primary btn-refresh">
+        ⟳ Actualizar
+      </button>
+      <small class="text-muted ms-2" id="refreshInfo" style="align-self:center;"></small>
+    </div>
+  </div>
+</div>
+
+<div class="fm-card p-3 mb-3">
+    <form asp-action="Index" method="get" class="row g-3 align-items-end filter-row">
+        <div class="col-12 col-md-3">
+            <label class="form-label">Rango</label>
+            <select class="form-select" id="rangeSelect" name="range">
+                <option value="today" selected="@(Model.Range=="today")">Hoy</option>
+                <option value="week" selected="@(Model.Range=="week")">Semana</option>
+                <option value="month" selected="@(Model.Range=="month")">Mes</option>
+                <option value="custom" selected="@(Model.Range=="custom")">Personalizado</option>
+            </select>
+        </div>
+        <div class="col-12 col-md-3 custom-range @(Model.Range=="custom" ? "" : "d-none")">
+            <label class="form-label">Desde</label>
+            <input type="date" class="form-control" name="from" value="@fromValue" />
+        </div>
+        <div class="col-12 col-md-3 custom-range @(Model.Range=="custom" ? "" : "d-none")">
+            <label class="form-label">Hasta</label>
+            <input type="date" class="form-control" name="to" value="@toValue" />
+        </div>
+        <div class="col-12 col-md-3">
+            <button class="btn btn-primary w-100" type="submit">Aplicar filtro</button>
+        </div>
+    </form>
+</div>
+
+<div class="stats-grid mb-3">
+    <div class="stat-card">
+        <div class="stat-label">Total reservas</div>
+        <div class="stat-value" id="statTotal">@Model.TotalReservas</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Programadas</div>
+        <div class="stat-value" id="statProgramadas">@Model.Programadas</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Atendidas</div>
+        <div class="stat-value" id="statAtendidas">@Model.Atendidas</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Canceladas</div>
+        <div class="stat-value" id="statCanceladas">@Model.Canceladas</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Tasa cancelación</div>
+        <div class="stat-value" id="statTasa">@Model.TasaCancelacion.ToString("0.##")%</div>
+    </div>
+</div>
+
+<div class="charts-grid mb-3">
+    <div class="fm-card p-3">
+        <div class="block-title">Reservas por día</div>
+        <div class="chart-wrap">
+            <canvas id="chartByDay"></canvas>
+        </div>
+    </div>
+    <div class="fm-card p-3">
+        <div class="block-title">Top especialidades</div>
+        <div class="chart-wrap">
+            <canvas id="chartTopServices"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="calendar-alerts-grid">
+    <div class="fm-card p-3">
+        <div class="block-title">Calendario mensual de reservas</div>
+        <div id="adminCalendar"></div>
+    </div>
+
+    <div class="fm-card p-3">
+        <div class="block-title">Próximas 24 horas</div>
+        @if (Model.Next24Hours != null && Model.Next24Hours.Count > 0)
+        {
+            <div class="alert-list">
+                @foreach (var a in Model.Next24Hours)
+                {
+                    var st = (a.Status ?? "programada").ToLower();
+                    <div class="alert-item">
+                        <div class="alert-time">@a.DateTimeStart.ToString("dd/MM HH:mm")</div>
+                        <div>
+                            <div class="alert-title">@((a.Service?.Name) ?? "Reserva")</div>
+                            <div class="alert-sub">@((a.Client?.FullName) ?? "Cliente")</div>
+                        </div>
+                        <div class="alert-status @st">@a.Status</div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <p class="text-muted mb-0">No hay reservas en las próximas 24 horas.</p>
+        }
+    </div>
+</div>
+
+
+<div class="modal fade" id="reservationDetailModal" tabindex="-1" aria-labelledby="reservationDetailLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content" style="background:var(--ad-surface);color:var(--ad-text);border:1px solid var(--ad-border);border-radius:16px;box-shadow:var(--ad-shadow);">
+      <div class="modal-header" style="border-bottom:1px solid var(--ad-border);">
+        <h5 class="modal-title" id="reservationDetailLabel">Detalle de reserva</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+
+      <div class="modal-body">
+        <dl class="row mb-0">
+          <dt class="col-sm-4">Servicio:</dt>
+          <dd class="col-sm-8" id="rdService">-</dd>
+
+          <dt class="col-sm-4">Cliente:</dt>
+          <dd class="col-sm-8" id="rdClient">-</dd>
+
+          <dt class="col-sm-4">Fecha y hora:</dt>
+          <dd class="col-sm-8" id="rdDate">-</dd>
+
+          <dt class="col-sm-4">Estado:</dt>
+          <dd class="col-sm-8">
+            <span class="alert-status programada" id="rdStatus">-</span>
+          </dd>
+
+          <dt class="col-sm-4">Precio:</dt>
+          <dd class="col-sm-8" id="rdPrice">-</dd>
+
+          <dt class="col-sm-4">Comentario:</dt>
+          <dd class="col-sm-8" id="rdComment">-</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+</div>
+
+@section Scripts {
+<script>
+window.adminDashboardData = {
+    byDayLabels: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ChartByDay.Select(x => x.Label))),
+    byDayValues: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ChartByDay.Select(x => x.Value))),
+    topLabels: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.TopServices.Select(x => x.Label))),
+    topValues: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.TopServices.Select(x => x.Value))),
+    calendarEvents: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+        Model.CalendarEvents.Select(e => new {
+            id = e.Id,
+            title = (e.Title ?? "Reserva") + " - " + (e.ClientName ?? ""),
+            start = e.DateTimeStart.ToString("s"),
+            className = (e.Status ?? "programada").ToLower()
+        })
+    ))
+};
+</script>
+}

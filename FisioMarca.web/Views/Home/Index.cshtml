@@ -1,0 +1,187 @@
+﻿@model IEnumerable<FisioMarca.Models.Service>
+@{
+    ViewData["Title"] = "Inicio";
+}
+
+<section class="hero hero-home mb-5">
+    <div class="hero-overlay">
+        <div class="hero-content text-end ms-auto">
+            <span class="hero-badge">Centro de fisioterapia integral</span>
+            <h1>Recupera tu movimiento,<br />vuelve a sentirte bien</h1>
+
+            <a class="btn btn-main btn-lg" asp-controller="Account" asp-action="Login">
+                Reservar cita
+            </a>
+
+        </div>
+    </div>
+</section>
+<section class="stories-section mb-5">
+    <h2 class="stories-title text-center mb-4">Historias de recuperación y bienestar</h2>
+
+    <div id="storiesCarousel" class="carousel slide" data-bs-ride="false">
+        <div class="carousel-inner">
+
+            <div class="carousel-item active">
+                <div class="row g-4 justify-content-center">
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <article class="story-card h-100">
+                            <div class="story-avatar-wrap">
+                                <img src="~/images/stories/historia1.jpeg" class="story-avatar" alt="Marisol O." />
+                            </div>
+                            <h3 class="story-name">Marisol O.</h3>
+                            <p class="story-text">
+                                “Llegué con dolor lumbar constante. Con el tratamiento personalizado en FisioMarca,
+                                volví a caminar sin molestias y retomé mis actividades.”
+                            </p>
+                        </article>
+                    </div>
+
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <article class="story-card h-100">
+                            <div class="story-avatar-wrap">
+                                <img src="~/images/stories/historia2.jpeg" class="story-avatar" alt="Víctor P." />
+                            </div>
+                            <h3 class="story-name">Víctor P.</h3>
+                            <p class="story-text">
+                                “Después de mi lesión de rodilla, pensé que no volvería al deporte.
+                                Hoy ya entreno con seguridad gracias al acompañamiento del equipo.”
+                            </p>
+                        </article>
+                    </div>
+
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <article class="story-card h-100">
+                            <div class="story-avatar-wrap">
+                                <img src="~/images/stories/historia3.jpeg" class="story-avatar" alt="Jenny R." />
+                            </div>
+                            <h3 class="story-name">Jenny R.</h3>
+                            <p class="story-text">
+                                “La atención fue humana y profesional. Mejoré mi movilidad cervical
+                                y reduje el dolor en pocas semanas.”
+                            </p>
+                        </article>
+                    </div>
+                </div>
+            </div>
+
+            <div class="carousel-item">
+                <div class="row g-4 justify-content-center">
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <article class="story-card h-100">
+                            <div class="story-avatar-wrap">
+                                <img src="~/images/stories/historia4.jpeg" class="story-avatar" alt="Carlos M." />
+                            </div>
+                            <h3 class="story-name">Carlos M.</h3>
+                            <p class="story-text">
+                                “En postoperatorio me ayudaron a recuperar fuerza y confianza para volver a mi rutina.”
+                            </p>
+                        </article>
+                    </div>
+
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <article class="story-card h-100">
+                            <div class="story-avatar-wrap">
+                                <img src="~/images/stories/historia5.jpeg" class="story-avatar" alt="Lucía A." />
+                            </div>
+                            <h3 class="story-name">Lucía A.</h3>
+                            <p class="story-text">
+                                “Con las sesiones de descarga muscular mejoré el descanso y bajó mi tensión en espalda.”
+                            </p>
+                        </article>
+                    </div>
+
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <article class="story-card h-100">
+                            <div class="story-avatar-wrap">
+                                <img src="~/images/stories/historia6.jpeg" class="story-avatar" alt="Renato C." />
+                            </div>
+                            <h3 class="story-name">Renato C.</h3>
+                            <p class="story-text">
+                                “Excelente evaluación y seguimiento. Sentí avances reales desde las primeras sesiones.”
+                            </p>
+                        </article>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button class="carousel-control-prev" type="button" data-bs-target="#storiesCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon"></span>
+            <span class="visually-hidden">Anterior</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#storiesCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon"></span>
+            <span class="visually-hidden">Siguiente</span>
+        </button>
+    </div>
+</section>
+
+<section class="fm-categories-section mb-5">
+    <div class="container">
+        <div class="fm-categories-header">
+            <h2 class="fm-categories-title m-0">Categorias</h2>
+
+            <a asp-controller="Services" asp-action="Index"
+               class="btn btn-outline-dark rounded-pill px-4 fw-semibold fm-cat-topbtn">
+                Ver todos
+            </a>
+        </div>
+
+    <div class="fm-categories-track">
+        @{
+            var cats = new[]
+            {
+                new {
+                Name = "Neurología Funcional",
+                Desc = "Tratamientos especializados para rehabilitación neurológica",
+                Img  = "/images/services/paralisis-facial.jpeg"
+                },
+                new {
+                Name = "Recuperación Muscular y Articular",
+                Desc = "Tratamiento integral para lesiones musculares y articulares",
+                Img  = "/images/services/desgarros.jpeg"
+                },
+                new {
+                Name = "Recuperación Postquirúrgica",
+                Desc = "Rehabilitación postoperatoria para recuperación funcional",
+                Img  = "/images/services/post-operatorio.jpeg"
+                },
+                new {
+                Name = "Masajes y Técnicas Manuales",
+                Desc = "Terapias manuales y técnicas complementarias",
+                Img  = "/images/services/descontracturante.jpeg"
+                },
+                new {
+                Name = "Prevención y Bienestar Integral",
+                Desc = "Terapias enfocadas en prevención y salud integral",
+                Img  = "/images/services/ventosas.jpeg"
+                }
+                };
+        }
+
+        @foreach (var c in cats)
+        {
+            <article class="fm-category-card">
+                <div class="fm-category-imgwrap">
+                    <img src="@c.Img"
+                         alt="@c.Name"
+                         class="fm-category-img"
+                         onerror="this.src='/images/services/default.jpg'" />
+                </div>
+
+                <div class="fm-category-body">
+                    <h3 class="fm-category-name">@c.Name</h3>
+                    <p class="fm-category-desc">@c.Desc</p>
+
+                    <a asp-controller="Services"
+                       asp-action="Index"
+                       asp-route-category="@c.Name"
+                       class="btn btn-primary w-100 fm-category-btn">
+                        Ver más
+                    </a>
+                </div>
+            </article>
+        }
+    </div>
+</section>

@@ -1,0 +1,250 @@
+﻿@model FisioMarca.Models.ViewModels.ServiceFormVM
+
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    var isEdit = Model != null && Model.Id > 0;
+    ViewData["Title"] = isEdit ? "Editar especialidad" : "Nueva especialidad";
+}
+
+<div class="admin-page">
+    <div class="service-form-shell">
+        <div class="service-form-header">
+            <div>
+                <h1 class="service-form-title">@((isEdit) ? "Editar especialidad" : "Nueva especialidad")</h1>
+                <p class="service-form-subtitle">
+                    @((isEdit) ? "Actualiza los datos del servicio." : "Completa los datos del servicio.")
+                </p>
+            </div>
+
+            <a asp-action="Services" class="service-form-close" title="Cerrar">✕</a>
+        </div>
+
+        <div class="service-form-card">
+            <form asp-controller="Admin"
+                  asp-action="@(isEdit ? "ServiceEdit" : "ServiceCreate")"
+                  method="post"
+                  novalidate>
+                @Html.AntiForgeryToken()
+
+                @if (isEdit)
+                {
+                    <input type="hidden" asp-for="Id" />
+                }
+
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                <div class="sf-grid">
+                    <!-- Nombre -->
+                    <div class="sf-field sf-col-4">
+                        <label asp-for="Name" class="sf-label">Nombre</label>
+                        <input asp-for="Name" class="sf-input" placeholder="Ej: Cervicalgia" />
+                        <span asp-validation-for="Name" class="text-danger small"></span>
+                    </div>
+
+                    <!-- Precio -->
+                    <div class="sf-field sf-col-2">
+                        <label asp-for="Price" class="sf-label">Precio</label>
+                        <div class="sf-price-wrap">
+                            <span class="sf-price-prefix">S/</span>
+                            <input asp-for="Price"
+                                   id="priceInput"
+                                   class="sf-input sf-input-price"
+                                   type="number"
+                                   step="0.01"
+                                   min="0"
+                                   placeholder="0.00" />
+                        </div>
+                        <span asp-validation-for="Price" class="text-danger small"></span>
+                    </div>
+
+                    <!-- Categoría -->
+                    <div class="sf-field sf-col-3">
+                        <label asp-for="CategoryId" class="sf-label">Categoría</label>
+                        <select asp-for="CategoryId"
+                                asp-items="ViewBag.CategoryId"
+                                id="categorySelect"
+                                class="sf-input sf-select">
+                            <option value="">Seleccionar categoría...</option>
+                        </select>
+                        <span asp-validation-for="CategoryId" class="text-danger small"></span>
+                    </div>
+
+                    <!-- URL Imagen -->
+                    <div class="sf-field sf-col-3">
+                        <label asp-for="ImageUrl" class="sf-label">URL de imagen</label>
+                        <input asp-for="ImageUrl"
+                               id="imageUrlInput"
+                               class="sf-input"
+                               type="url"
+                               placeholder="https://..." />
+                        <span asp-validation-for="ImageUrl" class="text-danger small"></span>
+                    </div>
+
+                    <!-- Descripción -->
+                    <div class="sf-field sf-col-12">
+                        <label asp-for="Description" class="sf-label">Descripción</label>
+                        <textarea asp-for="Description"
+                                  id="descriptionInput"
+                                  class="sf-textarea"
+                                  rows="5"
+                                  placeholder="Ej: Tratamiento de dolor cervical y rehabilitación..."></textarea>
+                        <span asp-validation-for="Description" class="text-danger small"></span>
+                    </div>
+
+                    <!-- Vista previa -->
+                    <div class="sf-field sf-col-12">
+                        <label class="sf-label">Vista previa de imagen</label>
+
+                        <div class="sf-preview-wrap">
+                            <div id="previewEmpty" class="sf-preview-empty">
+                                <div class="sf-preview-empty-ic">🖼️</div>
+                                <div class="sf-preview-empty-text">
+                                    Pega una URL de imagen para ver la vista previa
+                                </div>
+                                <div class="sf-preview-empty-sub">
+                                    Usa una URL directa (jpg, png, webp) y preferiblemente con https
+                                </div>
+                            </div>
+
+                            <img id="imagePreview"
+                                 class="sf-preview-img d-none"
+                                 alt="Vista previa de la especialidad" />
+
+                            <div id="previewError" class="sf-preview-error d-none">
+                                No se pudo cargar la imagen. Verifica que la URL sea válida y pública.
+                            </div>
+                        </div>
+
+                        <!-- Mini tarjeta preview -->
+                        <div class="sf-mini-card mt-3">
+                            <div class="sf-mini-card-badge" id="previewCategoryBadge">Sin categoría</div>
+                            <div class="sf-mini-card-body">
+                                <h4 id="previewName">Nombre de especialidad</h4>
+                                <p id="previewDescription">Aquí verás la descripción de la especialidad...</p>
+                                <div class="sf-mini-card-price" id="previewPrice">S/ 0.00</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sf-actions">
+                    <button type="submit" class="sf-btn sf-btn-primary">
+                        @((isEdit) ? "Guardar cambios" : "Crear especialidad")
+                    </button>
+
+                    <a asp-action="Services" class="sf-btn sf-btn-secondary">
+                        Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        (function () {
+            const inputUrl = document.getElementById("imageUrlInput");
+            const img = document.getElementById("imagePreview");
+            const empty = document.getElementById("previewEmpty");
+            const error = document.getElementById("previewError");
+
+            const inputName = document.getElementById("Name");
+            const inputPrice = document.getElementById("priceInput");
+            const inputDescription = document.getElementById("descriptionInput");
+            const categorySelect = document.getElementById("categorySelect");
+
+            const previewName = document.getElementById("previewName");
+            const previewPrice = document.getElementById("previewPrice");
+            const previewDescription = document.getElementById("previewDescription");
+            const previewCategoryBadge = document.getElementById("previewCategoryBadge");
+
+            function resetPreview() {
+                img.classList.add("d-none");
+                img.removeAttribute("src");
+                error.classList.add("d-none");
+                empty.classList.remove("d-none");
+            }
+
+            function showError() {
+                img.classList.add("d-none");
+                error.classList.remove("d-none");
+                empty.classList.add("d-none");
+            }
+
+            function showImage(url) {
+                error.classList.add("d-none");
+                empty.classList.add("d-none");
+
+                img.onload = function () {
+                    img.classList.remove("d-none");
+                    error.classList.add("d-none");
+                    empty.classList.add("d-none");
+                };
+
+                img.onerror = function () {
+                    showError();
+                };
+
+                img.src = url;
+            }
+
+            function updateImagePreview() {
+                const raw = (inputUrl?.value || "").trim();
+
+                if (!raw) {
+                    resetPreview();
+                    return;
+                }
+
+                const isHttp = /^https?:\/\/.+/i.test(raw);
+                const isLocalRoot = /^\/.+/.test(raw);
+
+                if (!isHttp && !isLocalRoot) {
+                    showError();
+                    return;
+                }
+
+                showImage(raw);
+            }
+
+            function updateTextPreview() {
+                const name = (inputName?.value || "").trim();
+                const desc = (inputDescription?.value || "").trim();
+                const priceRaw = (inputPrice?.value || "").trim();
+
+                previewName.textContent = name || "Nombre de especialidad";
+                previewDescription.textContent = desc || "Aquí verás la descripción de la especialidad...";
+
+                const price = parseFloat(priceRaw);
+                previewPrice.textContent = isNaN(price) ? "S/ 0.00" : `S/ ${price.toFixed(2)}`;
+
+                if (categorySelect) {
+                    const selectedText = categorySelect.options[categorySelect.selectedIndex]?.text || "";
+                    previewCategoryBadge.textContent = (categorySelect.value && selectedText)
+                        ? selectedText
+                        : "Sin categoría";
+                }
+            }
+
+            inputUrl?.addEventListener("input", updateImagePreview);
+            inputUrl?.addEventListener("change", updateImagePreview);
+            inputUrl?.addEventListener("blur", updateImagePreview);
+
+            inputName?.addEventListener("input", updateTextPreview);
+            inputPrice?.addEventListener("input", updateTextPreview);
+            inputDescription?.addEventListener("input", updateTextPreview);
+            categorySelect?.addEventListener("change", updateTextPreview);
+
+            document.addEventListener("DOMContentLoaded", function () {
+                updateImagePreview();
+                updateTextPreview();
+            });
+
+            updateImagePreview();
+            updateTextPreview();
+        })();
+    </script>
+}

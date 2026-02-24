@@ -1,0 +1,93 @@
+﻿@model FisioMarca.Models.Appointment
+@{
+    ViewData["Title"] = "Modificar reserva";
+    var services = ViewBag.Services as List<FisioMarca.Models.Service> ?? new List<FisioMarca.Models.Service>();
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-4">
+                    <h2 class="fw-bold mb-4" style="color:#2f66e8;">Modificar reserva</h2>
+
+                    <form asp-action="Edit" method="post">
+                        @Html.AntiForgeryToken()
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+
+                        <input asp-for="Id" type="hidden" />
+                        <input asp-for="ClientId" type="hidden" />
+
+                        <div class="mb-3">
+                            <label asp-for="DateTimeStart" class="form-label fw-semibold">Fecha y hora</label>
+                            <input asp-for="DateTimeStart"
+                                   type="datetime-local"
+                                   asp-format="{0:yyyy-MM-ddTHH:mm}"
+                                   class="form-control form-control-lg" />
+
+                            <span asp-validation-for="DateTimeStart" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="ServiceId" class="form-label fw-semibold">Especialidad</label>
+                            <select asp-for="ServiceId" class="form-select form-select-lg" asp-items="ViewBag.ServiceId" id="serviceSelect">
+                                <option value="">Selecciona una especialidad</option>
+                            </select>
+                            <span asp-validation-for="ServiceId" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Precio</label>
+                            <input asp-for="ServicePrice" class="form-control form-control-lg" id="servicePrice" readonly />
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Notes" class="form-label fw-semibold">Comentario</label>
+                            <textarea asp-for="Notes" class="form-control" rows="4"></textarea>
+                            <span asp-validation-for="Notes" class="text-danger"></span>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">Guardar cambios</button>
+                            <a asp-action="Index" class="btn btn-outline-secondary btn-lg">Volver</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            const services = [
+                @for (int i = 0; i < services.Count; i++)
+                {
+                        <text>{ id: @services[i].Id, price: @services[i].Price.ToString(System.Globalization.CultureInfo.InvariantCulture) }</text>
+                        if (i < services.Count - 1)
+                        {
+                                <text>,</text>
+                        }
+                }
+            ];
+
+            const serviceSelect = document.getElementById('serviceSelect');
+            const servicePrice = document.getElementById('servicePrice');
+
+            function updatePrice() {
+                const selectedId = parseInt(serviceSelect.value || "0");
+                const selected = services.find(x => x.id === selectedId);
+                if (!selected) {
+                    servicePrice.value = "";
+                    return;
+                }
+                servicePrice.value = Number(selected.price).toFixed(2);
+            }
+
+            serviceSelect.addEventListener('change', updatePrice);
+            updatePrice();
+        })();
+    </script>
+}

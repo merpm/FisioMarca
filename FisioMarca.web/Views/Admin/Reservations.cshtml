@@ -1,0 +1,100 @@
+﻿@model List<FisioMarca.Models.Appointment>
+@{
+    ViewData["Title"] = "Reservas de clientes";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    var filterStatus = (ViewBag.FilterStatus as string) ?? "";
+    var filterSearch = (ViewBag.FilterSearch as string) ?? "";
+}
+
+<div class="admin-page">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <div>
+            <h1 class="h3 mb-1">Reservas de clientes</h1>
+            <p class="text-muted mb-0">Visualiza, filtra y gestiona todas las reservas registradas.</p>
+        </div>
+        <a asp-action="Index" class="admin-back-btn" aria-label="Volver">
+            <span class="admin-back-ic">←</span>
+            Volver
+        </a>
+
+    </div>
+
+    <div class="card shadow-sm border-0 mb-3">
+        <div class="card-body">
+            <form asp-action="Reservations" method="get" class="row g-2 align-items-end">
+                <div class="col-12 col-md-4">
+                    <label class="form-label fw-semibold">Buscar</label>
+                    <input type="text" name="search" class="form-control"
+                           value="@filterSearch"
+                           placeholder="Cliente, servicio o nota..." />
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label fw-semibold">Estado</label>
+                    <select name="status" class="form-select">
+                        <option value="" selected="@(string.IsNullOrEmpty(filterStatus))">Todos</option>
+                        <option value="programada" selected="@(filterStatus=="programada")">Programada</option>
+                        <option value="atendida" selected="@(filterStatus=="atendida")">Atendida</option>
+                        <option value="cancelada" selected="@(filterStatus=="cancelada")">Cancelada</option>
+                    </select>
+                </div>
+                <div class="col-12 col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+                </div>
+                <div class="col-12 col-md-2">
+                    <a asp-action="Reservations" class="btn btn-outline-secondary w-100">Limpiar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            @if (Model == null || !Model.Any())
+            {
+                <div class="p-4 text-center">
+                    <h5 class="mb-1">No hay reservas para mostrar</h5>
+                    <p class="text-muted mb-0">No se encontraron registros con esos filtros.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="min-width:140px;">Fecha y hora</th>
+                                <th>Cliente</th>
+                                <th>Servicio</th>
+                                <th style="min-width:100px;">Precio</th>
+                                <th style="min-width:120px;">Estado</th>
+                                <th>Notas</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var a in Model)
+                            {
+                                var st = (a.Status ?? "").Trim().ToLower();
+                                var badgeClass = st == "atendida" ? "bg-success-subtle text-success-emphasis"
+                                : st == "cancelada" ? "bg-danger-subtle text-danger-emphasis"
+                                : "bg-primary-subtle text-primary-emphasis";
+
+                                <tr>
+                                    <td class="fw-semibold">@a.DateTimeStart.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td>@(a.Client?.FullName ?? "Sin cliente")</td>
+                                    <td>@(a.Service?.Name ?? "Sin servicio")</td>
+                                    <td>S/ @a.ServicePrice.ToString("0.00")</td>
+                                    <td>
+                                        <span class="badge rounded-pill @badgeClass">
+                                            @(string.IsNullOrWhiteSpace(a.Status) ? "Programada" : a.Status)
+                                        </span>
+                                    </td>
+                                    <td class="text-muted">@(string.IsNullOrWhiteSpace(a.Notes) ? "-" : a.Notes)</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>

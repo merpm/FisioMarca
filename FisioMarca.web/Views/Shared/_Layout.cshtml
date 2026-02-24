@@ -1,0 +1,121 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>@ViewData["Title"] - FisioMarca</title>
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700;800&family=Pacifico&display=swap" rel="stylesheet">
+</head>
+
+<body class="fm-body">
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom shadow-sm sticky-top">
+            <div class="container">
+
+                
+                <a class="navbar-brand fm-brand" asp-controller="Home" asp-action="Index">
+                    <img src="~/images/logos/fisio.png" alt="FisioMarca" class="fm-brand-logo" />
+                    <span class="fm-brand-name" aria-label="FisioMarca">
+                        <span class="fm-brand-fisio">Fisio</span>
+                        <span class="fm-brand-marca">MarCa</span>
+                    </span>
+                </a>
+
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
+                        aria-controls="mainNav" aria-expanded="false" aria-label="Alternar navegación">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                @{
+                    var userName = Context.Session.GetString("USER_NAME");
+                    var userRole = (Context.Session.GetString("USER_ROLE") ?? "").Trim().ToLower();
+                    var userEmail = (Context.Session.GetString("USER_EMAIL") ?? "").Trim().ToLower();
+
+                    var isLogged = !string.IsNullOrWhiteSpace(userName);
+                    var isAdmin = userRole == "admin" || userRole == "administrador"
+                    || userEmail == "mary@fisiomarca.com"
+                    || userEmail == "jonathan@fisiomarca.com";
+                }
+
+                <div class="collapse navbar-collapse" id="mainNav">
+                    <ul class="navbar-nav ms-auto align-items-center gap-2">
+
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Home" asp-action="Index">Inicio</a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Home" asp-action="Nosotros">Nosotros</a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Services" asp-action="Index">Servicios</a>
+                        </li>
+
+                        @if (isLogged)
+                        {
+                            if (isAdmin)
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="Admin" asp-action="Index">Dashboard</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="Admin" asp-action="Services">Especialidades</a>
+                                </li>
+                            }
+                            else
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link fm-nav-pill" asp-controller="Account" asp-action="Panel" asp-route-tab="perfil">Mi Panel</a>
+                                </li>
+
+                            }
+
+                            <li class="nav-item">
+                                <span class="nav-link">Hola, @userName</span>
+                            </li>
+
+                            <li class="nav-item">
+                                <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline m-0">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="logout-icon-btn" title="Cerrar sesión" aria-label="Cerrar sesión">
+                                        <img src="~/images/icons/cerrar.png" alt="Cerrar sesión" class="logout-icon-img" />
+                                    </button>
+                                </form>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Account" asp-action="Login">Iniciar sesión</a>
+                            </li>
+                        }
+
+                    </ul>
+                </div>
+
+            </div>
+        </nav>
+    </header>
+
+   
+    <main class="fm-main container py-4">
+        @RenderBody()
+    </main>
+
+    
+    @await Html.PartialAsync("_Footer")
+
+    
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

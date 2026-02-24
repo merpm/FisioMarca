@@ -1,0 +1,169 @@
+﻿@model FisioMarca.Models.ViewModels.ServiceCatalogVM
+@using Microsoft.AspNetCore.Http
+
+    @{
+    ViewData["Title"] = "Servicios";
+    var isSessionLogged = Context.Session.GetInt32("USER_ID").HasValue;
+    }
+
+<section class="services-page container my-4">
+
+    <div class="svc-filterbar mb-4">
+        <form class="svc-filterform" method="get" asp-action="Index" asp-controller="Services">
+            <div class="svc-filter-left">
+                <label class="svc-label" for="q">Buscar servicio</label>
+
+                <div class="svc-searchwrap">
+                    <input id="q" name="q" class="form-control svc-search"
+                           value="@Model.Q"
+                           placeholder="Ej: Post operatorio, masaje, ACV..." />
+
+                    <button type="button" class="svc-clearbtn" id="clearQ" aria-label="Limpiar">
+                        ×
+                    </button>
+                </div>
+            </div>
+
+            <div class="svc-filter-right">
+                <div class="svc-price-row">
+                    <div class="svc-price-label">
+                        Precio máx: <strong>S/ <span id="priceVal">@Model.MaxPrice</span></strong>
+                    </div>
+
+                    <input type="range"
+                           class="form-range svc-range"
+                           id="maxPriceRange"
+                           min="0" max="300" step="5"
+                           value="@Model.MaxPrice" />
+
+                    <input type="hidden" name="maxPrice" id="maxPrice" value="@Model.MaxPrice" />
+                    <input type="hidden" name="category" value="@Model.Category" />
+                </div>
+
+                <button type="submit" class="btn btn-primary svc-apply">Aplicar</button>
+
+                <a class="btn btn-outline-primary svc-apply"
+                   asp-controller="Services" asp-action="Index">
+                    Limpiar
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <div class="svc-layout">
+        <aside class="svc-sidebar">
+            <div class="svc-sidebar-title">CATEGORÍAS</div>
+
+            <a class="svc-cat-link @(string.IsNullOrEmpty(Model.Category) ? "active" : "")"
+               asp-controller="Services" asp-action="Index">
+                Todos los servicios
+            </a>
+
+            @foreach (var cat in Model.Categories)
+            {
+            <a class="svc-cat-link @(Model.Category == cat ? "active" : "")"
+               asp-controller="Services" asp-action="Index"
+               asp-route-category="@cat"
+               asp-route-q="@Model.Q"
+               asp-route-maxPrice="@Model.MaxPrice">
+                @cat
+            </a>
+            }
+        </aside>
+
+        <div class="svc-gridwrap">
+            <div class="svc-grid">
+                @foreach (var s in Model.Services)
+                {
+                    var img = string.IsNullOrWhiteSpace(s.ImageUrl) ? "/images/services/default.jpg" : s.ImageUrl;
+                    var desc = string.IsNullOrWhiteSpace(s.Description) ? "Tratamiento fisioterapéutico especializado." : s.Description;
+                    var categoryName = string.IsNullOrWhiteSpace(s.CategoryName) ? "Sin categoría" : s.CategoryName;
+
+                <article class="svc-card">
+                    <div class="svc-imgwrap">
+                        <img class="svc-img"
+                             src="@img"
+                             alt="@s.Name"
+                             onerror="this.src='/images/services/default.jpg'" />
+
+                        <span class="svc-chip">@categoryName</span>
+                    </div>
+
+                    <div class="svc-body">
+                        <h3 class="svc-name">@s.Name</h3>
+                        <p class="svc-desc">@desc</p>
+
+                        <div class="svc-bottom">
+                            <div class="svc-price">S/ @s.Price.ToString("N2")</div>
+
+                            @if (isSessionLogged)
+                             {
+                            <a class="btn btn-primary svc-btn"
+                               asp-controller="Appointments"
+                               asp-action="Create"
+                               asp-route-serviceId="@s.Id">
+                                Reservar sesión
+                            </a>
+                               }
+                                  else
+                                   {
+                            <a class="btn btn-primary svc-btn"
+                               asp-controller="Account"
+                               asp-action="Login"
+                               asp-route-returnUrl="@Url.Action("Create", "Appointments", new { serviceId = s.Id })">
+                                Reservar sesión
+                            </a>
+                                     }
+                        </div>
+                    </div>
+                </article>
+                }
+            </div>
+
+            @if (Model.Services == null || !Model.Services.Any())
+            {
+            <div class="mt-3 alert alert-light border">
+                No se encontraron servicios con esos filtros.
+            </div>
+            }
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        (function () {
+            const range = document.getElementById('maxPriceRange');
+            const hidden = document.getElementById('maxPrice');
+            const valueLabel = document.getElementById('priceVal');
+            const clearQ = document.getElementById('clearQ');
+            const q = document.getElementById('q');
+
+            if (range && hidden && valueLabel) {
+                const syncPrice = () => {
+                    hidden.value = range.value;
+                    valueLabel.textContent = range.value;
+                };
+
+                syncPrice();
+                range.addEventListener('input', syncPrice);
+                range.addEventListener('change', syncPrice);
+            }
+
+            if (clearQ && q) {
+                const toggleClear = () => {
+                    clearQ.style.display = (q.value || '').trim() ? 'inline-flex' : 'none';
+                };
+
+                clearQ.addEventListener('click', function () {
+                    q.value = '';
+                    q.focus();
+                    toggleClear();
+                });
+
+                q.addEventListener('input', toggleClear);
+                toggleClear();
+            }
+        })();
+    </script>
+}

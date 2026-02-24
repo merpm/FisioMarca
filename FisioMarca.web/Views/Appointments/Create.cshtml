@@ -1,0 +1,287 @@
+﻿@model FisioMarca.Models.ViewModels.AppointmentCreateVM
+@using FisioMarca.Models
+
+@{
+    ViewData["Title"] = "Reserva tu cita";
+    var services = ViewBag.Services as List<Service> ?? new List<Service>();
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-9 col-xl-8">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-4 p-md-4">
+                    <h2 class="fw-bold mb-4" style="color:#2f66e8;">Reserva tu cita</h2>
+
+                    <form asp-action="Create" method="post" id="appointmentForm">
+                        @Html.AntiForgeryToken()
+
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+
+                        <div class="row g-3">
+                            <!-- FECHA -->
+                            <div class="col-12 col-md-6">
+                                <label asp-for="AppointmentDate" class="form-label fw-semibold">Fecha</label>
+                                <input asp-for="AppointmentDate"
+                                       id="appointmentDate"
+                                       type="date"
+                                       class="form-control form-control-lg"
+                                       min="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                                <span asp-validation-for="AppointmentDate" class="text-danger"></span>
+                            </div>
+
+                            <!-- HORA -->
+                            <div class="col-12 col-md-6">
+                                <label asp-for="StartTime" class="form-label fw-semibold">Hora</label>
+                                <select asp-for="StartTime" id="startTimeSelect" class="form-select form-select-lg">
+                                    <option value="">Selecciona una hora</option>
+                                </select>
+                                <span asp-validation-for="StartTime" class="text-danger"></span>
+                                <small class="text-muted d-block mt-1">
+                                    Horario de atención: 07:00–12:00 y 14:00–19:00
+                                </small>
+                            </div>
+
+                            <!-- MULTISELECT DE SERVICIOS -->
+                            <div class="col-12">
+                                <label asp-for="SelectedServiceIds" class="form-label fw-semibold">
+                                    Especialidades (puedes escoger 1 o varias)
+                                </label>
+
+                                <select asp-for="SelectedServiceIds"
+                                        id="servicesMultiSelect"
+                                        multiple
+                                        class="form-select fm-multiselect">
+                                    @foreach (var s in services)
+                                    {
+                                        var duration = s.DurationMinutes <= 0 ? 45 : s.DurationMinutes;
+                                    <option value="@s.Id"
+                                            data-price="@s.Price.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                            data-duration="@duration">
+                                        @s.Name (@duration min) - S/@s.Price.ToString("0.00")
+                                    </option>
+                                    }
+                                </select>
+
+                                <span asp-validation-for="SelectedServiceIds" class="text-danger"></span>
+
+                                <small class="text-muted d-block mt-1">
+                                    En PC: Ctrl + clic para seleccionar varios. En celular/tablet: mantén pulsado.
+                                </small>
+                            </div>
+
+                            <!-- RESUMEN -->
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-semibold">Duración total</label>
+                                <input type="text" id="totalDurationText" class="form-control form-control-lg" readonly value="0 min" />
+                                <input type="hidden" asp-for="TotalDurationMinutes" id="totalDurationMinutes" />
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-semibold">Precio total</label>
+                                <input type="text" id="totalPriceText" class="form-control form-control-lg" readonly value="0.00" />
+                                <input type="hidden" asp-for="TotalPrice" id="totalPrice" />
+                            </div>
+
+                            <!-- COMENTARIO -->
+                            <div class="col-12">
+                                <label asp-for="Notes" class="form-label fw-semibold">Comentario</label>
+                                <textarea asp-for="Notes"
+                                          class="form-control"
+                                          rows="4"
+                                          maxlength="500"
+                                          placeholder="Escribe aquí tu comentario..."></textarea>
+                                <span asp-validation-for="Notes" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <!-- MENSAJE ESTADO SLOTS -->
+                        <div id="slotStatus" class="mt-3"></div>
+
+                        <div class="d-flex flex-wrap gap-2 mt-3">
+                            <button type="submit" class="btn btn-primary px-4 py-2" id="submitBtn">
+                                Enviar información
+                            </button>
+                            <a asp-action="Index" class="btn btn-outline-primary px-4 py-2">
+                                Volver
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+    (function () {
+        const dateInput = document.getElementById('appointmentDate');
+        const timeSelect = document.getElementById('startTimeSelect');
+        const servicesSelect = document.getElementById('servicesMultiSelect');
+        const totalPriceText = document.getElementById('totalPriceText');
+        const totalPriceHidden = document.getElementById('totalPrice');
+        const totalDurationText = document.getElementById('totalDurationText');
+        const totalDurationHidden = document.getElementById('totalDurationMinutes');
+        const slotStatus = document.getElementById('slotStatus');
+        const submitBtn = document.getElementById('submitBtn');
+
+        if (!dateInput || !timeSelect || !servicesSelect) {
+            console.error('No se encontraron los elementos del formulario de reserva.');
+            return;
+        }
+
+        function getSelectedServiceIds() {
+            return Array.from(servicesSelect.selectedOptions)
+                .map(o => parseInt(o.value))
+                .filter(n => !isNaN(n));
+        }
+
+        function updateTotals() {
+            const selected = Array.from(servicesSelect.selectedOptions);
+
+            let totalPrice = 0;
+            let totalDuration = 0;
+
+            selected.forEach(opt => {
+                totalPrice += parseFloat(opt.dataset.price || "0");
+                totalDuration += parseInt(opt.dataset.duration || "0");
+            });
+
+            totalPriceText.value = totalPrice.toFixed(2);
+            totalPriceHidden.value = totalPrice.toFixed(2);
+
+            totalDurationText.value = totalDuration + " min";
+            totalDurationHidden.value = totalDuration;
+        }
+
+        async function loadAvailableHours() {
+            const date = dateInput.value;
+            const serviceIds = getSelectedServiceIds();
+
+            // Guardar selección actual antes de limpiar
+            const prevValue = timeSelect.value;
+
+            // Reiniciar combo de horas
+            timeSelect.innerHTML = '<option value="">Selecciona una hora</option>';
+            slotStatus.innerHTML = '';
+            submitBtn.disabled = false;
+
+            if (!date) return;
+
+            const params = new URLSearchParams();
+            params.append("date", date);
+            serviceIds.forEach(id => params.append("serviceIds", id));
+
+            try {
+                const url = '@Url.Action("GetAvailableHours", "Appointments")' + '?' + params.toString();
+
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+
+                if (!response.ok) {
+                    throw new Error('HTTP ' + response.status);
+                }
+
+                const data = await response.json();
+
+                if (!data.ok) {
+                    slotStatus.innerHTML = '<div class="alert alert-warning py-2 mb-0">No se pudieron cargar los horarios.</div>';
+                    return;
+                }
+
+                let availableCount = 0;
+                let hiddenCount = 0;
+
+                // ✅ Mostrar SOLO horarios disponibles (más sutil)
+                data.slots.forEach(slot => {
+                    if (!slot.available) {
+                        hiddenCount++;
+                        return;
+                    }
+
+                    const option = document.createElement('option');
+                    option.value = slot.value;
+                    option.textContent = slot.label;
+                    timeSelect.appendChild(option);
+                    availableCount++;
+                });
+
+                // Restaurar selección si sigue existiendo
+                const stillExists = Array.from(timeSelect.options).find(o => o.value === prevValue);
+                if (stillExists) {
+                    timeSelect.value = prevValue;
+                }
+
+                const duration = parseInt(totalDurationHidden.value || "0");
+
+                if (availableCount === 0) {
+                    slotStatus.innerHTML = `
+                        <div class="alert alert-danger py-2 mb-0">
+                            No hay horarios disponibles para esa fecha${duration > 0 ? ` (${duration} min)` : ''}.
+                        </div>`;
+                    submitBtn.disabled = true;
+                } else {
+                    slotStatus.innerHTML = `
+                        <div class="alert alert-light border py-2 mb-0 text-muted">
+                            ${availableCount} horario(s) disponible(s)
+                            ${hiddenCount > 0 ? ` · ${hiddenCount} no disponibles ocultos` : ''}
+                            ${duration > 0 ? ` · duración total: ${duration} min` : ''}.
+                        </div>`;
+                    submitBtn.disabled = false;
+                }
+
+            } catch (error) {
+                console.error('Error loadAvailableHours:', error);
+                slotStatus.innerHTML = '<div class="alert alert-warning py-2 mb-0">Error al consultar horarios.</div>';
+            }
+        }
+
+        function onServicesChanged() {
+            updateTotals();
+            loadAvailableHours(); // recalcula horas porque cambia la duración total
+        }
+
+        dateInput.addEventListener('change', loadAvailableHours);
+        servicesSelect.addEventListener('change', onServicesChanged);
+
+        // Inicializar
+        updateTotals();
+        loadAvailableHours();
+    })();
+    </script>
+
+    <style>
+        .fm-multiselect {
+            min-height: 180px;
+            padding: .4rem;
+        }
+
+            .fm-multiselect option {
+                padding: .5rem .65rem;
+                margin-bottom: 2px;
+                border-radius: .35rem;
+            }
+
+        @@media (max-width: 768px) {
+            .card-body {
+                padding: 1rem !important;
+            }
+
+            .fm-multiselect {
+                min-height: 220px;
+                font-size: 0.95rem;
+            }
+
+            .form-control-lg,
+            .form-select-lg {
+                font-size: 1rem;
+                padding: .65rem .9rem;
+            }
+        }
+    </style>
+}
