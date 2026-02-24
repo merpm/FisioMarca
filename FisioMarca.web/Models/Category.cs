@@ -1,31 +1,30 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FisioMarca.Models
 {
-    [Table("categories")] // <- IMPORTANTE (tabla real en MySQL)
+    [Table("categories")]
     public class Category
     {
         [Key]
-        [Column("id")]
+        [Column("Id")]
         public int Id { get; set; }
 
         [Required]
-        [StringLength(100)]
-        [Column("name")]
+        [MaxLength(100)]
+        [Column("Name")]
         public string Name { get; set; } = string.Empty;
 
-        [StringLength(255)]
-        [Column("description")]
+        [Column("Description")]
         public string? Description { get; set; }
 
-        [StringLength(500)]
-        [Column("image_url")]
+        [Column("ImageUrl")]
         public string? ImageUrl { get; set; }
 
-        [Column("is_active")]
+        [Column("IsActive")]
         public bool IsActive { get; set; } = true;
 
-        public ICollection<Service> Services { get; set; } = new List<Service>();
+        public virtual ICollection<Service> Services { get; set; } = new List<Service>();
     }
 }
